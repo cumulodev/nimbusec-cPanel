@@ -1,0 +1,11 @@
+<div class="propertyEditor">
+    <div class="propertyLabel">Nimbusec Bundle</div>
+    <div class="propertyValue">
+	<select name="nimbusec_bundles" style="width:330px;">
+   	[% FOREACH bundles IN data.defaults.nimbusec_bundles.split(';') %]
+		[% bundle = bundles.split('=') %]	
+		<option value="[% bundle.join('_') %]">[% bundle.0 %]</option>
+	[% END %]
+	</select>
+    </div>
+</div>

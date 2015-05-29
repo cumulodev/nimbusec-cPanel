@@ -1,0 +1,13 @@
+[
+    {
+        "icon": "nimbusec.png",
+        "group_id": "security",
+        "order": 100,
+        "name": "Nimbusec Security Monitor",
+        "type": "link",
+        "id": "nimbusec",
+        "uri": "nimbusec/index.livephp",
+        "featuremanager": "1",
+        "description": "Nimbusec cPanel Integration"
+    }
+]
