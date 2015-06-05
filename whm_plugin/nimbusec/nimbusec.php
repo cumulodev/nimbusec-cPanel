@@ -161,9 +161,9 @@ catch(Exception $exp)
 						style="width: 300px;" /> <span class="error"><?php echo $apiSecretErr;?></span>
 				</p>
 				<p>
-					
+					<!-- https://dev-api.nimbusec.com -->
 					API Server: <input type="text" name="api_server"
-						style="width: 300px;" value="https://api.nimbusec.com" /> <span
+						style="width: 300px;" value="https://dev-api.nimbusec.com" /> <span
 						class="error"><?php echo $apiServerErr;?></span>
 				</p>
 				<p>

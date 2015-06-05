@@ -62,7 +62,7 @@ function getSignedLoginURL($userName, $userSecret, $userServer) {
 	$signature = str_replace ( "$2y$", "$2a$", $signature );
 	
 	// build the final SSO String
-	$ssoString = sprintf ( "%s/login/signed?user=%s&time=%d&sig=%s", $userServer, $userName, $time, $signature );
+	$ssoString = sprintf ( "%slogin/signed?user=%s&time=%d&sig=%s", $userServer, $userName, $time, $signature );
 	return $ssoString;
 }
 ?>
