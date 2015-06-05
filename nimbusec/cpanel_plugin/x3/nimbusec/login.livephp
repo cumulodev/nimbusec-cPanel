@@ -19,20 +19,12 @@ $nvSecret = $cpanel->api2(
     )
 );
 
-$nvServer = $cpanel->api2(
-    'NVData', 'get',
-    array(
-        'names' => 'NIMBUSEC_SERVER'
-    )
-);
-
 $name = $nvName['cpanelresult']['data'][0]['value'];
 $secret = $nvSecret['cpanelresult']['data'][0]['value'];
-$server = $nvServer['cpanelresult']['data'][0]['value'];
 
-if(!empty($name) && !empty($secret) && !empty($server))
+if(!empty($name) && !empty($secret))
 {
-	$ssoLink = getSignedLoginURL (trim($name), trim($secret), trim($server));
+	$ssoLink = getSignedLoginURL ( trim($name), trim($secret));
 	redirect ( $ssoLink );
 }
 else 
@@ -48,7 +40,7 @@ function redirect($url, $statusCode = 302) {
 	die ();
 }
 
-function getSignedLoginURL($userName, $userSecret, $userServer) {
+function getSignedLoginURL($userName, $userSecret) {
 	
 	// get time with milliseconds ~true timestamp (hack because PHP has no long)
 	$time = time ();
@@ -62,7 +54,7 @@ function getSignedLoginURL($userName, $userSecret, $userServer) {
 	$signature = str_replace ( "$2y$", "$2a$", $signature );
 	
 	// build the final SSO String
-	$ssoString = sprintf ( "%slogin/signed?user=%s&time=%d&sig=%s", $userServer, $userName, $time, $signature );
+	$ssoString = sprintf ( "%slogin/signed?user=%s&time=%d&sig=%s", "https://portal.nimbusec.com/", $userName, $time, $signature );
 	return $ssoString;
 }
 ?>

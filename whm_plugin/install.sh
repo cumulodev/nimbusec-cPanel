@@ -32,7 +32,7 @@ chmod 755 /usr/local/nimbusec >>$LOGFILE 2>&1
 ################# cPanel files #####################
 
 rm -rf /usr/local/cpanel/base/frontend/x3/nimbusec >/dev/null 2>&1
-cp -afr ../nimbusec/cpanel_plugin/nimbusec /usr/local/cpanel/base/frontend/x3/ >/dev/null 2>&1
+cp -afr ../nimbusec/cpanel_plugin/x3/nimbusec /usr/local/cpanel/base/frontend/x3/ >/dev/null 2>&1
 
 echo "INFO: Copy cPanel files for x3 to /usr/local/cpanel/base/frontend/x3/" | tee -a $LOGFILE
 
@@ -45,7 +45,7 @@ echo "INFO: Copy cPanel conf files for x3 to /usr/local/cpanel/bin/nimbusec/" | 
 ##########################################################
 if [ -d /usr/local/cpanel/base/frontend/paper_lantern ]; then
 	rm -rf /usr/local/cpanel/base/frontend/paper_lantern/nimbusec >/dev/null 2>&1
-	cp -afr ../nimbusec/cpanel_plugin/nimbusec /usr/local/cpanel/base/frontend/paper_lantern/ >/dev/null 2>&1
+	cp -afr ../nimbusec/cpanel_plugin/paper_lantern/nimbusec /usr/local/cpanel/base/frontend/paper_lantern/ >/dev/null 2>&1
 
 	echo "INFO: Copy cPanel files for paper_lantern to /usr/local/cpanel/base/frontend/paper_lantern/" | tee -a $LOGFILE
 else

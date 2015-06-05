@@ -1,0 +1,58 @@
+<?php
+require_once ('/usr/local/cpanel/php/cpanel.php');
+require_once 'lib/password.php';
+
+/* Setting up cPanel */
+$cpanel = new CPANEL();
+
+$nvName = $cpanel->api2(
+    'NVData', 'get',
+    array(
+        'names' => 'NIMBUSEC_NAME'
+    )
+);
+
+$nvSecret = $cpanel->api2(
+    'NVData', 'get',
+    array(
+        'names' => 'NIMBUSEC_SECRET'
+    )
+);
+
+$name = $nvName['cpanelresult']['data'][0]['value'];
+$secret = $nvSecret['cpanelresult']['data'][0]['value'];
+
+if(!empty($name) && !empty($secret))
+{
+	$ssoLink = getSignedLoginURL ( trim($name), trim($secret));
+	redirect ( $ssoLink );
+}
+else 
+{
+	echo "Error"; 
+ 	// Redirect to error page
+}
+
+function redirect($url, $statusCode = 302) {
+	header ( 'Location: ' . $url, true, $statusCode );
+	die ();
+}
+
+function getSignedLoginURL($userName, $userSecret) {
+	
+	// get time with milliseconds ~true timestamp (hack because PHP has no long)
+	$time = time ();
+	
+	// encode with BCrypt
+	$signature = password_hash ( $userName . $time . $userSecret, PASSWORD_BCRYPT );
+	
+	// previous PHP bcrypt version had a security bug in their implementation. To distinguish
+	// older signatures from (safe) new ones, they changed the prefix to $2y$. The nimbusec
+	// dashboard does not work with the PHP prefix, so just set the 'standard' $2a$ ;)
+	$signature = str_replace ( "$2y$", "$2a$", $signature );
+	
+	// build the final SSO String
+	$ssoString = sprintf ( "%slogin/signed?user=%s&time=%d&sig=%s", "https://portal.nimbusec.com/", $userName, $time, $signature );
+	return $ssoString;
+}
+?>

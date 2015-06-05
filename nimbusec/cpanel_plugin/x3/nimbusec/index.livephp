@@ -1,0 +1,60 @@
+<?php
+require_once ('/usr/local/cpanel/php/cpanel.php');
+
+/* Setting up cPanel */
+$cpanel = new CPANEL();
+$cpanel->api1("setvar", "", array("dprefix=../"));
+$cpanel->api1("setvar", "", array("headerimg=../images/topcgi.gif"));  
+
+/* Implementing cPanel Header */
+$header = $cpanel->api1('Branding', 'include', array('stdheader.html'));
+print $header['cpanelresult']['data']['result'];
+
+$loginLink = "<a href=\"login.livephp\" target=\"_blank\">Enter Nimbusec Portal</a>";
+
+$res = "";
+
+if(isset($_POST['saveChanges']))
+{
+        // Write to database (update domain)
+        // --> still left
+
+        // Set NVData
+        $check = isset($_POST['scheme']) && $_POST['scheme'] ? "1" : "0";
+
+        // echo "Value checkbox: "; var_dump($_POST['scheme']); echo "<br />";
+        // echo "Check value: $check <br />";
+        $cpanel->api1('NVData', 'set', array("NIMBUSEC_SCHEME" => "{$check}"));
+
+        $res = "INFO: Changes saved";
+}
+
+$nvScheme = $cpanel->api2(
+    'NVData', 'get',
+    array(
+        'names' => "NIMBUSEC_SCHEME"
+    )
+);
+
+$checkVal = trim($nvScheme['cpanelresult']['data'][0]['value']) ? "checked" : "";
+$checkbox = "<input name=\"scheme\" type=\"checkbox\" value=\"1\" {$checkVal}>";
+
+?>
+<form method="post" action="<?php echo $_SERVER['PHP_SELF']; ?>">
+<div class="body-content">
+	<h1> Nimbusec Security Plugin </h1>
+		<p>
+			<?php echo $loginLink; ?>
+		</p>
+	<!--<h1>Settings</h1>
+		<p><?php echo $checkbox; ?>	Set HTTPS URL</p>
+		<p><input type="submit" name="saveChanges" value="Save Changes" /></p>-->
+	<h2><p><?php echo $res;?></p></h2>
+</div>
+</form>
+<?php
+/* Implementing cPanel Foooter */
+$footer = $cpanel->api1('Branding', 'include', array('stdfooter.html'));
+print $footer['cpanelresult']['data']['result'];
+$cpanel->end();
+?>

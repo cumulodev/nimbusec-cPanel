@@ -6,11 +6,6 @@ require_once ('Logger.php');
 class Provision {
 	
 	private $nimbusecAPI;
-	
-	private $nimbusecAPIKey;
-	private $nimbusecAPISecret;
-	private $nimbusecAPIServer;
-	
 	private $domainID;
 	private $userID;
 	
@@ -20,10 +15,6 @@ class Provision {
 	private $DEFAULT_CRONSTRING = "su -c \"/opt/nimbusec/agent -config <confFile>\" <user>";
 
 	function __construct($key, $secret, $server) {
-		$this->nimbusecAPIKey = $key;
-		$this->nimbusecAPISecret = $secret;
-		$this->nimbusecAPIServer = $server;
-		
 		$this->nimbusecAPI = new NimbusecAPI ( $key, $secret, $server );
 	}
 	
@@ -130,9 +121,8 @@ class Provision {
 			}
 			file_put_contents ( "{$nvPath}NIMBUSEC_NAME", $userMail );
 			file_put_contents ( "{$nvPath}NIMBUSEC_SECRET", $signatureKey );
-			file_put_contents ( "{$nvPath}NIMBUSEC_SERVER", $this->nimbusecAPIServer );
 			
-			$logger->debug("Name, secret and server saved in nv data stores at {$nvPath}");
+			$logger->debug("Name and secret saved in nv data stores at {$nvPath}");
 			
 			// Create conf + cronjob
 			$confFile = str_replace(array("<nvpath>", "<user>"), array($nvPath, $user), $this->DEFAULT_AGENTCONFPATH);
@@ -204,11 +194,8 @@ class Provision {
 				
 			if(is_file("{$nvPath}NIMBUSEC_SECRET"))
 				unlink("{$nvPath}NIMBUSEC_SECRET");
-				
-			if(is_file("{$nvPath}NIMBUSEC_SERVER"))
-				unlink("{$nvPath}NIMBUSEC_SERVER");	
 			
-			$logger->debug("Name, secret and server removed from nv data stores at {$nvPath}");
+			$logger->debug("Name and secret removed from nv data stores at {$nvPath}");
 			
 			$confFile = str_replace(array("<nvpath>", "<user>"), array($nvPath, $user), $this->DEFAULT_AGENTCONFPATH);
 			if(is_file($confFile))
@@ -293,7 +280,6 @@ class Provision {
 	
 	private function registerNotification($notification)
 	{
-		// Packed in a seperate method to retain code's readability
 		$response = $this->nimbusecAPI->createNotification($notification, $this->userID);
 	}
 	
