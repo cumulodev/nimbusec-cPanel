@@ -6,8 +6,8 @@ class CUrlSession {
 		$this->curl = curl_init ();
 		curl_setopt ( $this->curl, CURLOPT_RETURNTRANSFER, true );
 		curl_setopt ( $this->curl, CURLOPT_FAILONERROR, false );
-		curl_setopt ( $this->curl, CURLOPT_SSL_VERIFYPEER, false );
-		curl_setopt ( $this->curl, CURLOPT_SSL_VERIFYHOST, false );
+		curl_setopt ( $this->curl, CURLOPT_SSL_VERIFYPEER, true );
+		curl_setopt ( $this->curl, CURLOPT_SSL_VERIFYHOST, 2 );
 		curl_setopt ( $this->curl, CURLOPT_HEADER, true );
 		curl_setopt ( $this->curl, CURLOPT_TIMEOUT, 20 );
 		curl_setopt ( $this->curl, CURLOPT_FRESH_CONNECT, true);
