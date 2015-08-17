@@ -1,190 +1,166 @@
 <?php
-require_once ("/usr/local/nimbusec/lib/WHMAPI.php");
 require_once ("/usr/local/nimbusec/lib/ServerAgent.php");
-require_once ("/usr/local/nimbusec/lib/PackageExtensions.php");
 require_once ("/usr/local/nimbusec/lib/Logger.php");
 
-$stat = 0;
-$message = "";
+$responseArray = array();
+$responseArray['status'] = 0;
+$responseArray['content'] = array();
 
 try{
-	
-	$logger = new Logger("/usr/local/nimbusec/nimbusec/logs", "installNimbusec.log", true);
-	$logger->info("Nimbusec installation begins...");
-	
-	// Get access data for WHM API
-	$hash = file_get_contents( "/root/.accesshash");
-	$host = gethostname();
-	$serverAddr = gethostbyname($host);
-	
-	$whmApi = new WHMAPI( $hash, $serverAddr );
-	list($key, $secret, $server) = $whmApi->getNVData(array("NIMBUSEC_APIKEY", "NIMBUSEC_APISECRET", "NIMBUSEC_APISERVER"));
-	
-	$logger->debug("Retrieved [key]: {$key}, [secret]: {$secret}, and [server]: {$server} from nvdata stores");
-	
+
+	$logger = new Logger("/usr/local/nimbusec/logs", "install_error.log");
+	$logger->progress("Nimbusec installation begins...");
+
 	// To remind, every error will be handled in the particular method of each PHP (!) class you use
 	// and catched in this class
 	// So you can log after every command without needing to check whether it worked properly or not
 	// because if it's not, it will be catched by the 'catch' - clause which will log it in addition
-	
+
 	// ################################## 1.) Server agent ##################################
-	
-	$serverAgent = new ServerAgent($key, $secret, $server);
+
+	$serverAgent = new ServerAgent($apiKey, $apiSecret);
 	$serverAgent->downloadServerAgent("linux", "64bit", "v7", "bin");
 	$logger->info("Server agent downloaded and installed");
-	
+
 	// Define token name
-	$token = array( "name" => date('Y/m/d-H:i:s') . "Token"	);
+	$name = "cPanelToken_" . date('Y/m/d-H:i:s');
+	$token = array( "name" => $name	);
 	list($serverAgentKey, $serverAgentSecret) = $serverAgent->createAgentToken($token);
-	
+
 	// Create array for calling whm api
 	$serverAgentArr = array(array("NIMBUSEC_SERVERAGENTKEY", $serverAgentKey), array("NIMBUSEC_SERVERAGENTSECRET", $serverAgentSecret));
 	// Call method to save credentials in non-volatile datastores (nvdata)
 	$whmApi->setNVData($serverAgentArr);
-	
 	$logger->info("Server agent token created");
 
 	// Default param $server
-	$serverAgent->createConfigFile($serverAgentKey, $serverAgentSecret, $server);
+	$serverAgent->createConfigFile($serverAgentKey, $serverAgentSecret);
 	$logger->info("Server agent config file created");
+	array_push($responseArray['content'], "Server agent installation finished");
+	$logger->progress("Server agent installation finished");
 
 	// ################################## 2.) Package extensions ##################################
-	
-	$packageExt = new PackageExtensions($key, $secret, $server);
-	
+
+	$packageExt = new PackageExtensions($apiKey, $apiSecret);
+
 	$res1 = copy("/usr/local/nimbusec/nimbusec/package_extensions/nimbusec", PackageExtensions::$extensionSettingPath);
 	$res2 = copy("/usr/local/nimbusec/nimbusec/package_extensions/nimbusec.tt2", PackageExtensions::$extensionTemplatePath);
 	if(!$res1 || !$res2)
-		throw new Exception("Package extension: Couldn't copy extention files.\nStatus setting: {$res1}\nStatus template: {$res2}\n");
-	
+		throw new Exception(__METHOD__ . " - Package extension: Couldn't copy extention files.\nStatus setting: ". json_encode($res1) . "\nStatus template: ". json_encode($res2) . "\n");
+
 	$logger->info("Pacakge extensions copied");
 	$packageExt->updatePackageExtensions();
-	$logger->info("Package extensions updated");
-	
+	$logger->progress("Package extentions installed and updated");
+	array_push($responseArray['content'], "Package extentions installed and updated");
+
 	// ################################## 3.) Cron job ##################################
-	
+
 	if(file_put_contents("/etc/cron.daily/nimbusec", "#!/bin/bash") === false)
-		throw new Exception("file_put_contents: creating cron job failed");
+		throw new Exception(__METHOD__ . " - file_put_contents: creating cron job failed");
 
 	if(!chmod("/etc/cron.daily/nimbusec", 0755))
-		throw new Exception("chmod: setting permission failed");		
+		throw new Exception(__METHOD__ . " - chmod: setting permissions failed");
 
-	$logger->info("Cron job created");
-	
+	$logger->progress("Cron job created");
+	array_push($responseArray['content'], "Cron job created");
+
 	// ################################## 4.) Hooks + cPanel ##################################
-	
-	/*$themes = array("x3", "paper_lantern");
-	foreach($themes as $theme){
-		copyDir("/usr/local/nimbusec/nimbusec/cpanel_plugin/{$theme}/nimbusec", "/usr/local/cpanel/base/frontend/{$theme}/nimbusec");
-	}*/
-	
-	$res = `/usr/local/nimbusec/nimbusec/hooks/install.sh`;
-	$logger->debug("Hooks installation message: ". trim($res));
-	
-	if(strpos($res, "#") !== false)
-		list($stat, $message) = explode('#', $res);
-	else{
-		$stat = 0;
-		$message = $res;
-	}
-	
-	if($stat)
-	{	
-		$logger->info(trim($message));
 
-		// Install cpanel
-		$res = `/usr/local/nimbusec/nimbusec/cpanel_plugin/install.sh`;
-		$logger->debug("cPanel installation message: ". trim($res));
-		if(strpos($res, "#") !== false)
-			list($stat, $message) = explode('#', $res);
-		else{
-			$stat = 0;
-			$message = $res;
+	// -- Installing hooks --
+	$disabled = explode(',', ini_get('disable_functions'));
+	$logger->debug(ini_get('disable_functions'));
+	$funcArr = array('exec', 'shell_exec');
+	$sysEnabled = false;
+	$func = "";
+
+	foreach($funcArr as $disFunc){
+		if(function_exists($disFunc) && !in_array($disFunc, $disabled)){
+			$sysEnabled = true; $func = $disFunc;
 		}
-		
-		if($stat)
-		{
-		 	$logger->info(trim($message));
-		 	$logger->info("Nimbusec installed");
-		 	$logger->info("Nimbusec installation ends...");
-			$logger->close();
-			return true;
-			
-		 }else
-		 	throw new Exception("cPanel installation failed: {$message}");
-	}else
-		throw new Exception("Hook installation failed: {$message}");
-	
-	$logger->error("Nimbusec installation finished unsuccessfully without throwing an exception...");
-	$logger->close();
-	
-	return false;
+	}
 
+	if($sysEnabled){
+
+		$res = $func('/usr/local/nimbusec/nimbusec/hooks/install.sh');
+		$logger->debug("Hooks installation message: ". $res);
+
+		if(strpos($res, "#") === false)
+			throw new Exception(__METHOD__ . " - An unknown error occured while installing hooks: {$res}");
+
+		list($stat, $message) = explode('#', $res);
+		if(!$stat)
+			throw new Exception(__METHOD__ . " - Hook installation failed: {$message}");
+
+		$logger->progress($message);
+		array_push($responseArray['content'], $message);
+
+		// -- Installing cpanel --
+		$res = $func('/usr/local/nimbusec/nimbusec/cpanel_plugin/install.sh');
+		$logger->debug("cPanel installation message: ". $res);
+
+		if(strpos($res, "#") === false)
+			throw new Exception(__METHOD__ . " - An unknown error occured while installing cpanel: {$res}");
+
+		list($stat, $message) = explode('#', $res);
+		if(!$stat)
+			throw new Exception(__METHOD__ . " - cPanel installation failed: {$message}");
+
+		$logger->progress($message);
+		array_push($responseArray['content'], $message);
+		$responseArray['status'] = 1;
+
+		return $responseArray;
+
+	}else{
+		$instructions = "You have disabled the function \"$func\" in your PHP configuration.\n
+		Therefore, the installation cannot be finished.\n
+		Take the following steps to complete the cPanel installation:\n
+			1.) Run \"$ /usr/local/nimbusec/nimbusec/hooks/install.sh\" to ensure that necessary internal script hooks are being included by WHM.\n
+			2.) Run \"$ /usr/local/nimbusec/nimbusec/cpanel_plugin/install.sh\" to install the Nimbusec plugin on cPanel side.\n
+			3.) Only when the script were executed successfully, add the following line to /var/cpanel/whm/nvdata/root.yaml which contains all environmental variables\n
+			- \"NIMBUSEC_INSTALLED: 1\" - or change the value to 1 if the field already exists.
+			4.) Afterwards, refresh the WHM plugin page to continue.
+		Alternatively, you may want to re-enable the affected function in your configuration and try it again.";
+		$logger->error($instructions);
+
+		array_push($responseArray['content'], "Nimbusec installation aborted...");
+		return $responseArray;
+	}
 }
 catch(CUrlException $exp)
 {
-	$logger->error("[CUrl SPECIFIC ERROR] in {$exp->getFile()}: {$exp->getMessage()} at line {$exp->getLine()}");
+	$logger->error("[CURL SPECIFIC ERROR] in {$exp->getFile()}: {$exp->getMessage()} at line {$exp->getLine()}");
 	$logger->info("Nimbusec installation aborted...");
-	
 	$logger->close();
-	return false;
+
+	array_push($responseArray['content'], "Nimbusec installation aborted...");
+	return $responseArray;
 }
 catch(NimbusecException $exp)
 {
 	$logger->error("[Nimbusec SPECIFIC ERROR] in {$exp->getFile()}: {$exp->getMessage()} at line {$exp->getLine()}");
 	$logger->info("Nimbusec installation aborted...");
-	
 	$logger->close();
-	return false;
+
+	array_push($responseArray['content'], "Nimbusec installation aborted...");
+	return $responseArray;
 }
 catch(WHMException $exp)
 {
 	$logger->error("[WHM SPECIFIC ERROR] in {$exp->getFile()}: {$exp->getMessage()} at line {$exp->getLine()}");
 	$logger->info("Nimbusec installation aborted...");
-	
 	$logger->close();
-	return false;
+
+	array_push($responseArray['content'], "Nimbusec installation aborted...");
+	return $responseArray;
 }
 catch(Exception $exp)
 {
 	$logger->error("[UNSPECIFIC ERROR] in {$exp->getFile()}: {$exp->getMessage()} at line {$exp->getLine()}");
 	$logger->info("Nimbusec installation aborted...");
-	
 	$logger->close();
-	return false;
+
+	array_push($responseArray['content'], "Nimbusec installation aborted...");
+	return $responseArray;
 }
-
-function deleteDir($path)
-{
-	if (is_dir($path) === true){
-		$files = array_diff(scandir($path), array('.', '..'));
-
-		foreach ($files as $file)
-			deleteDir(realpath($path) . '/' . $file);
-
-		return rmdir($path);
-	}
-	else if (is_file($path) === true)
-		return unlink($path);
-
-	return false;
-}
-//
-//function copyDir($from, $to)
-//{	
-//	if (is_dir($from) === true && is_dir($to) === true){
-//		$files = array_diff(scandir($from), array('.', '..'));
-//
-//		foreach ($files as $file)
-//			return copyDir(realpath($from) . '/' . $file, realpath($to) . '/' . $file);
-//	}
-//	else if (is_file($from) === true && is_file($from) === false){
-//		return copy($from, $to);
-//	}
-//	else if(is_dir($to) === false){
-//		mkdir($to, 0755);
-//		return copyDir($from, $to);
-//	}	
-//	return false;
-//}
 ?>

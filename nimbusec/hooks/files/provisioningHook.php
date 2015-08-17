@@ -1,6 +1,6 @@
 #!/usr/bin/php -q
 <?php
-require_once ('/usr/local/nimbusec/lib/WHMAPI.php');
+require_once ('/usr/local/nimbusec/lib/WHMAPIClient.php');
 require_once ('/usr/local/nimbusec/lib/Provision.php');
 require_once ('/usr/local/nimbusec/lib/Logger.php');
 
@@ -11,53 +11,55 @@ list ( $result_status, $result_msg ) = provisioningUser ( $input );
 // Write response to STDOUT
 echo "$result_status $result_msg";
 function provisioningUser($input = array()) {
-	
-	$logger = new Logger("/usr/local/nimbusec/nimbusec/hooks/logs", "provisioning.log", true);
+
+	$logger = new Logger("/usr/local/nimbusec/logs", "provisioning.log", true);
 	$data = $input ['data'];
 
 	$logger->info("Triggered provisioning hook");
 	$logger->info("Check bundle");
 
 	try {
-		if(array_key_exists('contactemail', $data) && !empty($data['contactemail']))
+		// isset is much faster than array_key_exists
+		// http://stackoverflow.com/questions/2473989/list-of-big-o-for-php-functions
+		// At the same time you can save checking whether with empty(), isset() does the same anyway
+		// https://www.virendrachandak.com/techtalk/php-isset-vs-empty-vs-is_null/
+		if(isset($data['contactemail']))
 		{
-			if (array_key_exists ( 'nimbusec_bundles', $data )) {
-					
+			if (isset($data['nimbusec_bundles'])) {
+
 				$logger->info("User has nimbusec");
-					
+
 				// Get access data for WHM API
 				$hash = file_get_contents ( "/root/.accesshash" );
 				$host = gethostname ();
 				$serverAddr = gethostbyname ( $host );
-	
-				$whmApi = new WHMAPI ( $hash, $serverAddr );
-					
-				list($key, $secret, $server) = $whmApi->getNVData(array("NIMBUSEC_APIKEY", "NIMBUSEC_APISECRET", "NIMBUSEC_APISERVER"));
-			$logger->debug("Retrieved [key]: '{$key}' [secret]: '{$secret}' and [server]: '{$server}' from nvdata stores");
-					
+
+				$whmApi = new WHMAPIClient ( $hash, $serverAddr );
+
+				list($key, $secret) = $whmApi->getNVData(array("NIMBUSEC_APIKEY", "NIMBUSEC_APISECRET"));
+
 				$logger->debug("Read relevant data for [user] '{$data ['user']}': [domain] => '{$data ['domain']}'
 				, [contactemail] => '{$data ['contactemail']}' and [nimbusec_bundles] => '{$data ['nimbusec_bundles']}'");
-			
+
 				$logger->info("Provisioning begins..");
-					
-				$provision = new Provision ( $key, $secret, $server );
+
+				$provision = new Provision ( $key, $secret );
 				$res = $provision->provisionUser($data, $logger);
-					
+
 				if($res[0])
 					$logger->info($res[1]);
 				else
 					$logger->error($res[1]);
-					
+
 				$logger->info("Provisioning ends..");
 				$logger->close();
 				return array(1, $res[1]);
-					
-			} else
-			{
+
+			} else {
 				$str = "User doesn't have nimbusec";
 				$logger->info($str);
 				$logger->close();
-					
+
 				return array (
 						"1",
 						$str
@@ -68,7 +70,7 @@ function provisioningUser($input = array()) {
 			$str = "No email specified. Therefore user can't be provisioned with nimbusec";
 			$logger->info($str);
 			$logger->close();
-					
+
 			return array (
 					"1",
 					$str
@@ -145,7 +147,7 @@ function get_passed_data() {
 		$input_data = array (
 				'context' => array (),
 				'data' => array (),
-				'hook' => array () 
+				'hook' => array ()
 		);
 	}
 	return $input_data;

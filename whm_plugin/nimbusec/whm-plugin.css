@@ -1,0 +1,152 @@
+/*************** Attribute definitions **************/
+h3 {
+	font-size: 20px;
+}
+html, body {
+      overflow: hidden;
+}
+html > * {
+	overflow: hidden;
+}
+body > * {
+	overflow: hidden;
+}
+/*************** Class definitions **************/
+/* Main container */
+.nimbu-mainContainer {
+	margin: 40px;
+}
+.nimbu-mainContainer h1 {
+	font-size: 28px;
+    padding: 0px 0px 15px 0px;
+    border-bottom: 1px solid #E5E5E5;
+}
+.nimbu-mainContainer h3 {
+	margin: 30px 0px 20px 0px;
+}
+/* Description & Introduction container */
+.nimbu-introductionContainer {
+	margin: 20px 0;
+	border-bottom: 1px solid #E5E5E5;
+    padding: 0 0px 20px 0;
+}
+/* Settings -> Form container */
+.nimbu-installContainer {
+	padding: 10px 0 0 0;
+}
+/* Update -> Form container -> button */
+.nimbu-updateContainer button {
+	margin: 10px 0px 0px 0px;
+}
+/* Update -> Titlecontainer */
+.nimbu-updateTitleContainer {
+	margin: 30px 0px 20px 0px;
+}
+.nimbu-updateTitleContainer img {
+	margin-bottom: 6px;
+}
+.nimbu-updateTitleContainer h3 {
+	display: inline;
+}
+/* Little change for the bootstrap table */
+.fixed-table-body {
+	height: auto;
+}
+/* Form elements with additional group el. */
+.nimbu-input-group input[type="text"] {
+	padding-left: 10px;
+}
+
+/* General form elements */
+.nimbu-awe-input-field input[type="text"] {
+	padding: 0px 0px 0px 32.5px;
+}
+.nimbu-awe-input-field i {
+	position: absolute;
+	padding: 10px 12px;
+}
+/* Status label */
+.nimbu-status-label {
+	float: none;
+	margin-left: 7.5px;
+	padding: 5px 8px 6px 7px;
+}
+.nimbu-status-label i {
+	margin-right: -1.5px;
+}
+
+/* Navigation bar */
+.breadcrumbs li img {
+	top: 0px;
+	right: 1px;
+}
+
+/* Users tab */
+.panel-group .panel {
+    margin-bottom: 25px;
+}
+.nimbu-packages {
+    margin: 25px 25px 0px 25px;
+}
+.nimbu-package-head > * {
+    display: inline;
+}
+.nimbu-package-icon {
+    color: grey;
+	-moz-transition: transform 1s;
+	-webkit-transition: transform 1s;
+	transition: transform 1s;
+}
+
+.nimbu-package-head {
+    margin-bottom: 10px;
+}
+.nimbu-package-head h4 {
+	font-size: 20px;
+}
+.nimbu-package-link {
+    /*background-color: #FEFEFE;*/
+    padding-top: 5px;
+    padding-bottom: 5px;
+    border-top: 1px solid #E5E5E5;
+    margin: 0px -15px -10px -15px;
+    /* Shadow layer... fancy, isn't it? */
+	box-shadow: 0px 2px 3px 0px #d3d3d3;
+    -moz-box-shadow: 0px 2px 3px 0px #d3d3d3;
+    -webkit-box-shadow: 0px 2px 3px 0px #d3d3d3;
+    /* h-coord, v-coord, blur, spread, color */
+}
+.nimbu-package-link span {
+    padding-left: 50%;
+    padding-right: 50%;
+
+    /* covers older browsers */
+    cursor: pointer;
+    cursor: hand;
+}
+.nimbu-users-table {
+	margin: 20px;
+	width: 97%;
+}
+.nimbu-head-bundle-data {
+	opacity: 0.6;
+	display: block;
+	margin-top: 2.5px;
+}
+.nimbu-head-bundle-data > * {
+	display: inline;
+}
+.nimbu-head-bundle-box {
+	margin: 0px 20px 0px 35px;
+}
+.nimbu-users-title-container{
+	margin-bottom: 30px;
+}
+
+/*************** Specific elements **************/
+#statusMessage p {
+	margin: 0px 16px;
+}
+#updateStatusMessage p {
+	margin: 0px 17px;
+}

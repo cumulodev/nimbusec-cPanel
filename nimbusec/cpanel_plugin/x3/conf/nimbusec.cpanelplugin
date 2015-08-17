@@ -1,7 +1,7 @@
 #cpanel plugin file for nimbusec integration
 version: 1.0
 name:nimbusec
-description:Nimbusec cPanel Integration 
+description:Nimbusec cPanel Integration
 url:nimbusec/index.livephp
 itemorder:100
 itemdesc:Nimbusec Security Monitor
