@@ -195,13 +195,14 @@ function installation(e){
 
 	// Build serializeString
 	var id = $(this).attr("id");
+	$(this).prop("disabled", true);
 	var params = $("#settingsForm").serialize() + "&action=" + id;
 
 	// Display output
 	displayStatus("statusMessage", STATUS.INFO, "Installation of the nimbusec plugin will be started...");
 
 	// Call ajax
-	executeProcess(params);
+	executeProcess(params, $(this));
 }
 function uninstallation(e){
 
@@ -210,19 +211,20 @@ function uninstallation(e){
 
 	// Build serializeString
 	var id = $(this).attr("id");
+	$(this).prop("disabled", true);
 	var params = "action=" + id;
 
 	// Display output
 	displayStatus("statusMessage", STATUS.INFO, "Uninstallation of the nimbusec plugin will be started...");
 
 	// Call ajax
-	executeProcess(params);
+	executeProcess(params, $(this));
 }
 
 /**
  * The actual method which performs ajax calls for both the installation and uninstallation
  */
-function executeProcess(params){
+function executeProcess(params, triggeredBtn){
 
 	// Setup ajax
 	// Could also be save in a varable more flexible
@@ -240,13 +242,15 @@ function executeProcess(params){
 
 		if(res.status){
 			displayStatus("statusMessage", STATUS.SUCCESS, msg); init();
-	    }else
-			displayStatus("statusMessage", STATUS.ERROR, msg);
+	    }else {
+			displayStatus("statusMessage", STATUS.ERROR, msg); triggeredBtn.prop("disabled", false); }
 
     }).fail(function( xhr, status, errorThrown ) {
 
 		var msg = "Status: " + status + "<br />" + "Error thrown: "+ errorThrown + "<br />" + "XHR: " + xhr;
 		displayStatus("statusMessage", STATUS.ERROR, msg);
+
+		triggeredBtn.prop("disabled", false);
     });
 }
 
